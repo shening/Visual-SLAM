@@ -53,6 +53,12 @@ using namespace std;
 //*************************GLOBAL VARIABLES*****************************
 string desired_mode = "0";
 float current_x = 0.0, current_y = 0.0, current_z = 0.0;
+
+//***********PX4Flow************************
+float flow_current_x = 0.0, flow_current_y = 0.0, flow_current_z = 0.0;
+float flow_vx = 0.0, flow_vy = 0.0, flow_qual = 0.0;
+
+
 double current_yaw = 0.0;
 geometry_msgs::Quaternion rotatedQ;
 geometry_msgs::PoseStamped CurrentPoseStamped;
@@ -98,6 +104,8 @@ class ImageGrabber
 	ros::Publisher* pPosPub;
 };
 
+
+
 void ImageGrabber::PublishPose(cv::Mat Tcw)
 {
     if(!Tcw.empty())
@@ -128,6 +136,27 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
        	prevTrackedTime = ros::Time::now();
     }
 	return;
+}
+
+void PX4FlowReceived(const geometry_msgs::PoseStampedPtr& PX4FlowNEDMsg) 
+{
+	flow_current_x = PX4FlowNEDMsg->pose.position.x;
+	flow_current_y = PX4FlowNEDMsg->pose.position.y;
+	flow_current_z = PX4FlowNEDMsg->pose.position.z;
+	flow_vx =  PX4FlowNEDMsg->pose.orientation.x;
+	flow_vy =  PX4FlowNEDMsg->pose.orientation.y;
+	flow_qual =  PX4FlowNEDMsg->pose.orientation.z;
+
+
+	ROS_INFO("flow_current_x: %0.2f, flow_current_y: %0.2f, flow_current_z: %0.2f, flow_vx: %0.2f, flow_vy: %0.2f, flow_qual: %0.2f", flow_current_x, flow_current_y, flow_current_z, flow_vx, flow_vy, flow_qual);
+
+
+/*	double current_roll, current_pitch, current_yaw;
+	tf::Quaternion quat(PoseMsg->pose.orientation.x, PoseMsg->pose.orientation.y, PoseMsg->pose.orientation.z, PoseMsg->pose.orientation.w);
+	tf::Matrix3x3 m(quat);
+	m.getRPY(current_roll, current_pitch, current_yaw);
+
+	current_FLU_yaw = (current_yaw - M_PI/2)*180/M_PI;*/
 }
 
 void ModeMessageReceived(const std_msgs::String& ModeMsg) 
@@ -245,6 +274,7 @@ void check_waypoint_distance()
 			waypoint_reached = false;
    		}
 	}
+	return;
 }
 
 void check_desired_mode()
@@ -341,6 +371,7 @@ int main(int argc, char **argv)
 	ros::Subscriber state_sub = nodeHandler.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
 	ros::Subscriber sub = nodeHandler.subscribe(camera_topic, 1, &ImageGrabber::GrabImage,&igb);
 	ros::Subscriber sub_mode = nodeHandler.subscribe("/navigation_mode", 1000, &ModeMessageReceived);
+	ros::Subscriber px4flow_sub = nodeHandler.subscribe("/px4flowLocalNEDraw", 1000, &PX4FlowReceived);
 	ros::Subscriber sub_alt = nodeHandler.subscribe("/rangefinder_altitude", 1000, &ImageGrabber::AltMessageReceived,&igb);
 
 	//published topics
@@ -370,18 +401,22 @@ int main(int argc, char **argv)
 
        	//check if mode change is desired
        	if(desired_mode.compare("0")!=0)
+       	{
        		check_desired_mode();
+       	}
 
     	//Check if within threshold to desired waypoint
     	if(followWaypoint)
+    	{
     		check_waypoint_distance();
+    	}
 
     	//increment count for header.seq
     	count++;
 
 
        //Publish desired position when vision is working. isTracked flag stops publishing if tracking is lost.
-		if(isTracked==true && publishFromGCS==false)
+		if(publishFromGCS==false)
 		{
 			//publish desired position and reset flag
 		    desired_pub.publish(DesiredPoseStamped); 
