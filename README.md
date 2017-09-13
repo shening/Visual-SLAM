@@ -42,7 +42,7 @@ Perform the following steps to setup Visual-SLAM on a new machine (currently onl
 
 2. [Calibrate](http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration) the camera. Create a calibration file (like [this](/mvbluefox_ws/src/bluefox2/mv_25002112.yaml)) and place it in ~/.ros/camera_info/ (create the folder if it does not exist). Rename the file as `mv_<your-camera-device-id>`.
 
-3. Add USB rules for the altimeter/distance sensor, the gripper servo and the autpilot by following the instructions [here](https://unix.stackexchange.com/a/183492). Perform the steps for one sensor at a time. During the attribute walkthrough step mentioned in the above link, pick the `idVendor`, `idProduct` and the `serial` that appears at the very top in the terminal. Further, add `MODE=="0666"` to ensure the user has access to the USB ports (you can alternatively [add the user to the dialout group](https://askubuntu.com/a/112572)). A sample rules file would look as follows:
+3. Add USB rules for the altimeter/distance sensor, the gripper servo and the autpilot by following the instructions [here](https://unix.stackexchange.com/a/183492). (also added them at the bottom of Readme) Perform the steps for one sensor at a time. During the attribute walkthrough step mentioned in the above link, pick the `idVendor`, `idProduct` and the `serial` that appears at the very top in the terminal. Further, add `MODE=="0666"` to ensure the user has access to the USB ports (you can alternatively [add the user to the dialout group](https://askubuntu.com/a/112572)). A sample rules file would look as follows:
 
 ```
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", ATTRS{serial}=="DN00IK4C", MODE=="0666", SYMLINK+="rangefinder"
@@ -117,3 +117,31 @@ You can load or save a set of waypoints by using the `LW` or the `SW` modes. The
 ## Load/Save Map
 
 You can change the `reuse_map` and the `save_map` parameters in [Visual-SLAM.yaml](Visual-SLAM.yaml) to load/save a map. If `reuse_map` is true, Visual-SLAM loads the map saved as [Slam_latest_Map.bin](Slam_latest_Map.bin). If `save_map` is true, Visual-SLAM overwrites [Slam_latest_Map.bin](Slam_latest_Map.bin) with the current map.
+
+
+
+USB Rules copid from website
+The rule syntax above may work on some distributions, but did not work on mine (Raspbian). Since I never found a single document that explains all the ins and outs, I wrote my own, to be found here. This is what it boils down to.
+1. find out what's on ttyUSB:
+
+dmesg | grep ttyUSB  
+2. list all attributes of the device:
+
+udevadm info --name=/dev/ttyUSBx --attribute-walk
+(with your device number(s) instead of x, of course). Pick out a unique identifier set, eg idVendor + idProduct. You may also need SerialNumber if you have more than one device with the same idVendor and idProduct. SerialNumbers ought to be unique for each device.
+3. Create a file /etc/udev/rules.d/99-usb-serial.rules with something like this line in it:
+
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1234", ATTRS{idProduct}=="5678", SYMLINK+="your_device_name" 
+(assuming you don't need a serial number there, and of course with the numbers for idVendor and idProduct that you found in step 2.
+4. Load the new rule:
+
+sudo udevadm trigger
+5. Verify what happened:
+
+ls -l /dev/your_device_name  
+will show what ttyUSB number the symlink went to. If it's /dev/ttyUSB1, then verify who owns that and to which group it belongs:
+
+ls -l /dev/ttyUSB1   
+Then just for the fun of it:
+
+udevadm test -a -p  $(udevadm info -q path -n /dev/your_device_name)
