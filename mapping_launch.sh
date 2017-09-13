@@ -11,8 +11,9 @@ sleep 5
 #gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/realsense.sh'
 gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/matrixvision.sh'
 gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/matrixvision2.sh'
-gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/gripper.sh'
+#gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/gripper.sh'
 gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/SLAM.sh'
+gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/px4flow_start.sh'
 sleep 30
 gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/rostopic_current.sh'
 gnome-terminal -x '/home/'$USER'/Visual-SLAM/launch_scripts/rostopic_desired.sh'

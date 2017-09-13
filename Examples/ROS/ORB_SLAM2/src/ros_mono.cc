@@ -56,6 +56,7 @@ float current_x = 0.0, current_y = 0.0, current_z = 0.0;
 
 //***********PX4Flow************************
 float flow_current_x = 0.0, flow_current_y = 0.0, flow_current_z = 0.0;
+float flow_x_delta = 0.0, flow_y_delta = 0.0, flow_z_delta = 0.0;
 float flow_vx = 0.0, flow_vy = 0.0, flow_qual = 0.0;
 
 
@@ -71,6 +72,7 @@ bool armNow = false, disarmNow = false;
 bool followWaypoint = false;
 bool flymode = false;
 bool publishFromGCS = false;
+bool testFlow = false;
 
 mavros_msgs::State current_state;
 
@@ -105,7 +107,7 @@ class ImageGrabber
 };
 
 
-
+//Pose calculation  based on Vision SLAM. It actually gets published in the Altimeter message receive function
 void ImageGrabber::PublishPose(cv::Mat Tcw)
 {
     if(!Tcw.empty())
@@ -116,9 +118,19 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 		cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
 		cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
 		vector<float> q = ORB_SLAM2::Converter::toQuaternion(Rwc);
-       
-		current_x = scale*twc.at<float>(0);
-		current_y = scale*twc.at<float>(2);
+
+
+       if(testFlow == false)
+       {
+       	current_x = scale*twc.at<float>(0);
+	current_y = scale*twc.at<float>(2);
+       }
+       else
+       {
+       	current_x += flow_y_delta;
+    	current_y += flow_x_delta;
+       }
+		
 		if(useRangefinder==false)
 		{
 			current_z = -scale*twc.at<float>(1);
@@ -135,11 +147,30 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 
        	prevTrackedTime = ros::Time::now();
     }
+    /*else if(flow_qual > 100)// THIS ONLY WORKS WITH 0 HEADING FOR NOW.
+    {
+    	current_x += flow_x_delta;
+    	current_y += flow_y_delta;
+    	prevTrackedTime = ros::Time::now();
+    	//NOT TESTED - USE SONAR IF NO RANGEFINDER AND VISION FAILS
+    	//if(useRangefinder==false)
+		//{
+		//	current_z = flow_current_z;
+		//}
+
+
+    }*/
 	return;
 }
 
 void PX4FlowReceived(const geometry_msgs::PoseStampedPtr& PX4FlowNEDMsg) 
 {
+
+
+	flow_x_delta = PX4FlowNEDMsg->pose.position.x - flow_current_x;
+	flow_y_delta = PX4FlowNEDMsg->pose.position.y - flow_current_y;
+	flow_z_delta = PX4FlowNEDMsg->pose.position.z - flow_current_z;
+
 	flow_current_x = PX4FlowNEDMsg->pose.position.x;
 	flow_current_y = PX4FlowNEDMsg->pose.position.y;
 	flow_current_z = PX4FlowNEDMsg->pose.position.z;
@@ -322,6 +353,10 @@ void check_desired_mode()
 		mode_SW();
 	else if (desired_mode.compare("FLY")==0)
    		mode_FLY();
+   	else if (desired_mode.compare("FLOW_ON")==0)
+   		mode_PX4FLOW_ON();
+   	else if (desired_mode.compare("FLOW_OFF")==0)
+   		mode_PX4FLOW_OFF();
 	else
 	{
 		ROS_ERROR("Desired mode %s rejected. Mode not recognized.", desired_mode.c_str());
@@ -371,7 +406,7 @@ int main(int argc, char **argv)
 	ros::Subscriber state_sub = nodeHandler.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
 	ros::Subscriber sub = nodeHandler.subscribe(camera_topic, 1, &ImageGrabber::GrabImage,&igb);
 	ros::Subscriber sub_mode = nodeHandler.subscribe("/navigation_mode", 1000, &ModeMessageReceived);
-	ros::Subscriber px4flow_sub = nodeHandler.subscribe("/px4flowLocalNEDraw", 1000, &PX4FlowReceived);
+	ros::Subscriber px4flow_sub = nodeHandler.subscribe("/px4flow/px4flowLocalNEDraw", 1000, &PX4FlowReceived);
 	ros::Subscriber sub_alt = nodeHandler.subscribe("/rangefinder_altitude", 1000, &ImageGrabber::AltMessageReceived,&igb);
 
 	//published topics

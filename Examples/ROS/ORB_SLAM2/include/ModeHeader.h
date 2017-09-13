@@ -25,7 +25,7 @@ extern float current_x, current_y, current_z, start_x, start_y;
 extern float takeoff_height;
 extern double current_yaw;
 extern mavros_msgs::State current_state;
-extern bool armNow, disarmNow, flymode, publishFromGCS, followWaypoint;
+extern bool armNow, disarmNow, flymode, publishFromGCS, followWaypoint, testFlow;
 extern vector<float> xWaypoint, yWaypoint, zWaypoint, yawWaypoint, tWaypoint;
 extern int nWaypoints, desWaypoint;
 
@@ -61,4 +61,10 @@ void mode_LW();
 void mode_SW();
 //Start flying
 void mode_FLY();
+
+
+//*****Testing Modes*********
+void mode_PX4FLOW_ON();
+
+void mode_PX4FLOW_OFF();
 #endif
