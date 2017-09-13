@@ -61,3 +61,15 @@ cd ../gripper_ws/src/
 catkin_init_workspace
 cd ..
 catkin_make
+
+echo "Building px4flow ROS nodes"
+cd ../px4flow/src/
+catkin_init_workspace
+cd ..
+catkin_make
+
+echo "Building IMUFilter AHRS ROS nodes"
+cd ../IMUFilter_ws/src/
+catkin_init_workspace
+cd ..
+catkin_make
