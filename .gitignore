@@ -41,3 +41,7 @@ px4flow/build/*
 px4flow/devel/*
 px4flow/src/CMakeLists.txt
 px4flow/.catkin_workspace
+IMUFilter_ws/build/*
+IMUFilter_ws/devel/*
+IMUFilter_ws/src/CMakeLists.txt
+IMUFilter_ws/.catkin_workspace
