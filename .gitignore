@@ -37,3 +37,7 @@ gripper_ws/build/*
 gripper_ws/devel/*
 gripper_ws/src/CMakeLists.txt
 gripper_ws/.catkin_workspace
+px4flow/build/*
+px4flow/devel/*
+px4flow/src/CMakeLists.txt
+px4flow/.catkin_workspace
