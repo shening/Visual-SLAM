@@ -9,6 +9,7 @@
 
 //test
 uint32_t local_ned_counter = 0;
+int flow_quality;
 namespace px
 {
 
@@ -176,6 +177,7 @@ SerialComm::readCallback(const boost::system::error_code& error, size_t bytesTra
                 optFlowMsg.velocity_x = flow.flow_comp_m_x;
                 optFlowMsg.velocity_y = flow.flow_comp_m_y;
                 optFlowMsg.quality = flow.quality;
+                flow_quality = flow.quality;
 
                 m_optFlowPub.publish(optFlowMsg);
 
@@ -210,7 +212,7 @@ SerialComm::readCallback(const boost::system::error_code& error, size_t bytesTra
                 Px4FlowLocalNEDraw.pose.position.z = local_NED.z;
                 Px4FlowLocalNEDraw.pose.orientation.x = 0;
                 Px4FlowLocalNEDraw.pose.orientation.y = 0;
-                Px4FlowLocalNEDraw.pose.orientation.z = 0;
+                Px4FlowLocalNEDraw.pose.orientation.z = flow_quality;
                 m_optFlowLocalNEDPub.publish(Px4FlowLocalNEDraw);
 
                 local_ned_counter++;

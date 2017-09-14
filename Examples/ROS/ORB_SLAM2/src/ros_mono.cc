@@ -38,6 +38,7 @@
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
+#include <sensor_msgs/Imu.h>
 
 #include <opencv2/core/core.hpp>
 #include "Converter.h"
@@ -61,6 +62,7 @@ float flow_vx = 0.0, flow_vy = 0.0, flow_qual = 0.0;
 
 
 double current_yaw = 0.0;
+double current_yaw_mag = 0.0;
 geometry_msgs::Quaternion rotatedQ;
 geometry_msgs::PoseStamped CurrentPoseStamped;
 
@@ -179,7 +181,7 @@ void PX4FlowReceived(const geometry_msgs::PoseStampedPtr& PX4FlowNEDMsg)
 	flow_qual =  PX4FlowNEDMsg->pose.orientation.z;
 
 
-	ROS_INFO("flow_current_x: %0.2f, flow_current_y: %0.2f, flow_current_z: %0.2f, flow_vx: %0.2f, flow_vy: %0.2f, flow_qual: %0.2f", flow_current_x, flow_current_y, flow_current_z, flow_vx, flow_vy, flow_qual);
+	//ROS_INFO("flow_current_x: %0.2f, flow_current_y: %0.2f, flow_current_z: %0.2f, flow_vx: %0.2f, flow_vy: %0.2f, flow_qual: %0.2f", flow_current_x, flow_current_y, flow_current_z, flow_vx, flow_vy, flow_qual);
 
 
 /*	double current_roll, current_pitch, current_yaw;
@@ -188,6 +190,24 @@ void PX4FlowReceived(const geometry_msgs::PoseStampedPtr& PX4FlowNEDMsg)
 	m.getRPY(current_roll, current_pitch, current_yaw);
 
 	current_FLU_yaw = (current_yaw - M_PI/2)*180/M_PI;*/
+
+	return;
+}
+
+
+void IMU_mag_AHRS(const sensor_msgs::Imu& IMU_MagMsg)
+{
+	double current_roll_mag, current_pitch_mag;
+	tf::Quaternion quat_mag(IMU_MagMsg.orientation.x, IMU_MagMsg.orientation.y, IMU_MagMsg.orientation.z, IMU_MagMsg.orientation.w);
+	tf::Matrix3x3 m(quat_mag);
+
+	m.getRPY(current_roll_mag, current_pitch_mag, current_yaw_mag);
+
+	ROS_INFO("Roll: %0.2f, Pitch: %0.2f, Yaw: %0.2f", current_roll_mag*180.0 / M_PI, current_pitch_mag*180.0 / M_PI, current_yaw_mag*180.0 / M_PI);
+
+
+	return;
+
 }
 
 void ModeMessageReceived(const std_msgs::String& ModeMsg) 
@@ -407,6 +427,7 @@ int main(int argc, char **argv)
 	ros::Subscriber sub = nodeHandler.subscribe(camera_topic, 1, &ImageGrabber::GrabImage,&igb);
 	ros::Subscriber sub_mode = nodeHandler.subscribe("/navigation_mode", 1000, &ModeMessageReceived);
 	ros::Subscriber px4flow_sub = nodeHandler.subscribe("/px4flow/px4flowLocalNEDraw", 1000, &PX4FlowReceived);
+	ros::Subscriber IMU_mag = nodeHandler.subscribe("/imu/data", 1000, &IMU_mag_AHRS);
 	ros::Subscriber sub_alt = nodeHandler.subscribe("/rangefinder_altitude", 1000, &ImageGrabber::AltMessageReceived,&igb);
 
 	//published topics
