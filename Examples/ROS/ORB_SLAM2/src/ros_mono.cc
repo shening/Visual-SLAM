@@ -63,6 +63,7 @@ float flow_vx = 0.0, flow_vy = 0.0, flow_qual = 0.0;
 
 double current_yaw = 0.0;
 double current_yaw_mag = 0.0;
+double yaw_offset = 0.0;
 geometry_msgs::Quaternion rotatedQ;
 geometry_msgs::PoseStamped CurrentPoseStamped;
 
@@ -125,7 +126,7 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
        if(testFlow == false)
        {
        	current_x = scale*twc.at<float>(0);
-	current_y = scale*twc.at<float>(2);
+		current_y = scale*twc.at<float>(2);
        }
        else
        {
@@ -143,7 +144,7 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 		//m.getRPY(current_pitch, current_yaw, current_roll);
 		m.getRPY(current_roll, current_pitch, current_yaw);
 
-		//ROS_INFO("q1: %0.2f, q2: %0.2f, q3: %0.2f, q4: %0.2f, cy: %0.2f", q[0], q[1], q[2], q[3], current_yaw);
+		ROS_INFO("q1: %0.2f, q2: %0.2f, q3: %0.2f, q4: %0.2f, cy: %0.2f", q[0], q[1], q[2], q[3], current_yaw*180.0 / M_PI);
 
 		rotatedQ = tf::createQuaternionMsgFromRollPitchYaw(0, 0, -current_yaw+M_PI/2);		
 
@@ -328,6 +329,16 @@ void check_waypoint_distance()
 	return;
 }
 
+void calculate_yaw_offset()
+{
+
+	//if(isTracked == true)
+	{
+		yaw_offset = current_yaw - current_yaw_mag;
+		ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
+	}
+}
+
 void check_desired_mode()
 {
 	if(desired_mode.compare("O")==0)
@@ -472,11 +483,12 @@ int main(int argc, char **argv)
 
 
        //Publish desired position when vision is working. isTracked flag stops publishing if tracking is lost.
-		if(publishFromGCS==false)
+    	// ***** Don't think we need isTracked flag
+		if(isTracked == true && publishFromGCS==false)
 		{
 			//publish desired position and reset flag
 		    desired_pub.publish(DesiredPoseStamped); 
-			isTracked = false;
+			//isTracked = false;
 		}
 
 		//check if tracking is lost for more than 0.5 second
@@ -484,6 +496,7 @@ int main(int argc, char **argv)
     	{
     		ROS_ERROR("No vision pose available. Swtiching to Land!");
     		desired_mode = "L";
+    		isTracked = false;
     	}
 
       	ros::spinOnce();
