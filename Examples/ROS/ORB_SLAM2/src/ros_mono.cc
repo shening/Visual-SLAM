@@ -394,7 +394,7 @@ void check_desired_mode()
    	else if (desired_mode.compare("FLOW_OFF")==0)
    		mode_PX4FLOW_OFF();
    	else if (desired_mode.compare("CALC_OFFSET")==0)
-   		calculate_yaw_offset;
+   		calculate_yaw_offset();
 	else
 	{
 		ROS_ERROR("Desired mode %s rejected. Mode not recognized.", desired_mode.c_str());
