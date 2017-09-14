@@ -163,7 +163,7 @@ SerialComm::readCallback(const boost::system::error_code& error, size_t bytesTra
             case MAVLINK_MSG_ID_OPTICAL_FLOW:
             {
                 // decode message
-                ROS_INFO("OPTICAL FLOW MESSAGE");
+                //ROS_INFO("OPTICAL FLOW MESSAGE");
                 mavlink_optical_flow_t flow;
                 mavlink_msg_optical_flow_decode(&message, &flow);
 
@@ -216,7 +216,7 @@ SerialComm::readCallback(const boost::system::error_code& error, size_t bytesTra
                 m_optFlowLocalNEDPub.publish(Px4FlowLocalNEDraw);
 
                 local_ned_counter++;
-            	ROS_INFO("LOCAL POSITION NED MESSAGE");
+            	//ROS_INFO("LOCAL POSITION NED MESSAGE");
             	break;
             }
             case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:

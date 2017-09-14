@@ -143,6 +143,8 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
     }
     else if(flow_qual > 100)// THIS ONLY WORKS WITH 0 HEADING FOR NOW.
     {
+
+    	flow_qual = 0; //reset flow qual so that if flow crashes wed do not keep the last flow qual value //Not tested
     	current_x -= flow_y_delta;
     	current_y -= flow_x_delta;
 
