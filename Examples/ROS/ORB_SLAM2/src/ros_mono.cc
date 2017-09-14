@@ -113,7 +113,7 @@ class ImageGrabber
 //Pose calculation  based on Vision SLAM. It actually gets published in the Altimeter message receive function
 void ImageGrabber::PublishPose(cv::Mat Tcw)
 {
-    if(!Tcw.empty())
+    if(!Tcw.empty() && testFlow == false)
     {
 		double current_roll, current_pitch;
 
@@ -122,18 +122,9 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 		cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
 		vector<float> q = ORB_SLAM2::Converter::toQuaternion(Rwc);
 
-
-       if(testFlow == false)
-       {
-       		current_x = scale*twc.at<float>(0);
+       	current_x = scale*twc.at<float>(0);
 		current_y = scale*twc.at<float>(2);
-       }
-       else
-       {
-       	current_x -= flow_y_delta;
-    	current_y -= flow_x_delta;
-       }
-		
+       		
 		if(useRangefinder==false)
 		{
 			current_z = -scale*twc.at<float>(1);
@@ -144,16 +135,24 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 		//m.getRPY(current_pitch, current_yaw, current_roll);
 		m.getRPY(current_roll, current_pitch, current_yaw);
 
-		ROS_INFO("q1: %0.2f, q2: %0.2f, q3: %0.2f, q4: %0.2f, cy: %0.2f", q[0], q[1], q[2], q[3], current_yaw*180.0 / M_PI);
-
+		//ROS_INFO("q1: %0.2f, q2: %0.2f, q3: %0.2f, q4: %0.2f, cy: %0.2f", q[0], q[1], q[2], q[3], current_yaw*180.0 / M_PI);
+		ROS_INFO("VisionYaw = %0.2f", current_yaw*180.0 / M_PI)
 		rotatedQ = tf::createQuaternionMsgFromRollPitchYaw(0, 0, -current_yaw+M_PI/2);		
 
        	prevTrackedTime = ros::Time::now();
     }
-    /*else if(flow_qual > 100)// THIS ONLY WORKS WITH 0 HEADING FOR NOW.
+    else if(flow_qual > 100)// THIS ONLY WORKS WITH 0 HEADING FOR NOW.
     {
-    	current_x += flow_x_delta;
-    	current_y += flow_y_delta;
+    	current_x -= flow_y_delta;
+    	current_y -= flow_x_delta;
+
+    	if(useRangefinder==false)
+		{
+			current_z = flow_current_z;
+		}
+
+		rotatedQ = tf::createQuaternionMsgFromRollPitchYaw(0, 0, -current_yaw_mag+M_PI/2);
+
     	prevTrackedTime = ros::Time::now();
     	//NOT TESTED - USE SONAR IF NO RANGEFINDER AND VISION FAILS
     	//if(useRangefinder==false)
@@ -162,7 +161,7 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 		//}
 
 
-    }*/
+    }
 	return;
 }
 
@@ -184,14 +183,6 @@ void PX4FlowReceived(const geometry_msgs::PoseStampedPtr& PX4FlowNEDMsg)
 
 	//ROS_INFO("flow_current_x: %0.2f, flow_current_y: %0.2f, flow_current_z: %0.2f, flow_vx: %0.2f, flow_vy: %0.2f, flow_qual: %0.2f", flow_current_x, flow_current_y, flow_current_z, flow_vx, flow_vy, flow_qual);
 
-
-/*	double current_roll, current_pitch, current_yaw;
-	tf::Quaternion quat(PoseMsg->pose.orientation.x, PoseMsg->pose.orientation.y, PoseMsg->pose.orientation.z, PoseMsg->pose.orientation.w);
-	tf::Matrix3x3 m(quat);
-	m.getRPY(current_roll, current_pitch, current_yaw);
-
-	current_FLU_yaw = (current_yaw - M_PI/2)*180/M_PI;*/
-
 	return;
 }
 
@@ -205,10 +196,10 @@ void IMU_mag_AHRS(const sensor_msgs::Imu& IMU_MagMsg)
 	m.getRPY(current_roll_mag, current_pitch_mag, current_yaw_mag);
 	current_yaw_mag = -current_yaw_mag;
 
-	ROS_INFO("Roll: %0.2f, Pitch: %0.2f, Yaw: %0.2f", current_roll_mag*180.0 / M_PI, current_pitch_mag*180.0 / M_PI, current_yaw_mag*180.0 / M_PI);
+	//ROS_INFO("Roll: %0.2f, Pitch: %0.2f, Yaw: %0.2f", current_roll_mag*180.0 / M_PI, current_pitch_mag*180.0 / M_PI, current_yaw_mag*180.0 / M_PI);
+	
 	ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
-
-
+	current_yaw_mag = current_;yaw_mag + yaw_offset;
 
 	return;
 
@@ -335,12 +326,16 @@ void check_waypoint_distance()
 void calculate_yaw_offset()
 {
 
-	//if(isTracked == true)
+	if(isTracked == true)
 	{
 		ROS_INFO("Calculated yaw offset");
 		yaw_offset = current_yaw - current_yaw_mag;
 		ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
 
+	}
+	else
+	{
+		ROS_INFO("No vision pose. Unable to set yaw offset");
 	}
 	return;
 }
@@ -348,7 +343,10 @@ void calculate_yaw_offset()
 void check_desired_mode()
 {
 	if(desired_mode.compare("O")==0)
+	{
+		calculate_yaw_offset();
 		mode_O();
+	}
    	//mode to takeoff
    	else if(desired_mode.compare("T")==0)
     	mode_T();
