@@ -205,6 +205,8 @@ void IMU_mag_AHRS(const sensor_msgs::Imu& IMU_MagMsg)
 	m.getRPY(current_roll_mag, current_pitch_mag, current_yaw_mag);
 
 	ROS_INFO("Roll: %0.2f, Pitch: %0.2f, Yaw: %0.2f", current_roll_mag*180.0 / M_PI, current_pitch_mag*180.0 / M_PI, current_yaw_mag*180.0 / M_PI);
+	ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
+
 
 
 	return;
@@ -334,9 +336,12 @@ void calculate_yaw_offset()
 
 	//if(isTracked == true)
 	{
+		ROS_INFO("Calculated yaw offset");
 		yaw_offset = current_yaw - current_yaw_mag;
 		ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
+
 	}
+	return;
 }
 
 void check_desired_mode()
@@ -388,6 +393,8 @@ void check_desired_mode()
    		mode_PX4FLOW_ON();
    	else if (desired_mode.compare("FLOW_OFF")==0)
    		mode_PX4FLOW_OFF();
+   	else if (desired_mode.compare("CALC_OFFSET")==0)
+   		calculate_yaw_offset;
 	else
 	{
 		ROS_ERROR("Desired mode %s rejected. Mode not recognized.", desired_mode.c_str());
