@@ -125,13 +125,13 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 
        if(testFlow == false)
        {
-       	current_x = scale*twc.at<float>(0);
+       		current_x = scale*twc.at<float>(0);
 		current_y = scale*twc.at<float>(2);
        }
        else
        {
-       	current_x += flow_y_delta;
-    	current_y += flow_x_delta;
+       	current_x -= flow_y_delta;
+    	current_y -= flow_x_delta;
        }
 		
 		if(useRangefinder==false)
@@ -203,6 +203,7 @@ void IMU_mag_AHRS(const sensor_msgs::Imu& IMU_MagMsg)
 	tf::Matrix3x3 m(quat_mag);
 
 	m.getRPY(current_roll_mag, current_pitch_mag, current_yaw_mag);
+	current_yaw_mag = -current_yaw_mag;
 
 	ROS_INFO("Roll: %0.2f, Pitch: %0.2f, Yaw: %0.2f", current_roll_mag*180.0 / M_PI, current_pitch_mag*180.0 / M_PI, current_yaw_mag*180.0 / M_PI);
 	ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
