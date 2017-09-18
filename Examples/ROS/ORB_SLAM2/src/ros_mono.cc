@@ -70,12 +70,14 @@ geometry_msgs::PoseStamped CurrentPoseStamped;
 float scale;
 bool useRangefinder;
 
+
 bool isTracked = false;
 bool armNow = false, disarmNow = false;
 bool followWaypoint = false;
 bool flymode = false;
 bool publishFromGCS = false;
 bool testFlow = false;
+bool use_flow = false;
 
 mavros_msgs::State current_state;
 
@@ -115,6 +117,7 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 {
     if(!Tcw.empty() && testFlow == false)
     {
+    	use_flow = false;
 		double current_roll, current_pitch;
 
     	isTracked = true;
@@ -145,14 +148,14 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
     {
 
     	flow_qual = 0; //reset flow qual so that if flow crashes wed do not keep the last flow qual value //Not tested
-    	current_x -= flow_y_delta;
-    	current_y -= flow_x_delta;
+    	use_flow = true;
+
+    	//do flow x,y,z calculations in flow receive function for better timing and accuracy
 
     	if(useRangefinder==false)
 		{
 			current_z = flow_current_z;
 		}
-
 		rotatedQ = tf::createQuaternionMsgFromRollPitchYaw(0, 0, -current_yaw_mag+M_PI/2);
 
     	prevTrackedTime = ros::Time::now();
@@ -182,6 +185,16 @@ void PX4FlowReceived(const geometry_msgs::PoseStampedPtr& PX4FlowNEDMsg)
 	flow_vy =  PX4FlowNEDMsg->pose.orientation.y;
 	flow_qual =  PX4FlowNEDMsg->pose.orientation.z;
 
+	if (use_flow == true)
+	{
+		if(flow_qual > 100)
+		{
+			current_x -= flow_y_delta;
+    		current_y -= flow_x_delta;
+
+		}
+
+	}
 
 	//ROS_INFO("flow_current_x: %0.2f, flow_current_y: %0.2f, flow_current_z: %0.2f, flow_vx: %0.2f, flow_vy: %0.2f, flow_qual: %0.2f", flow_current_x, flow_current_y, flow_current_z, flow_vx, flow_vy, flow_qual);
 
@@ -238,7 +251,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
-	// Copy the ros image message to cv::Mat.
+	//Copy the ros image message to cv::Mat.
 	cv_bridge::CvImageConstPtr cv_ptr;
 	try
 	{
@@ -346,7 +359,11 @@ void check_desired_mode()
 {
 	if(desired_mode.compare("O")==0)
 	{
-		calculate_yaw_offset();
+
+		/*this is to sync the mag heading (used with  px4flow) with vision SLAM heading . 
+		Might have to do this right before px4flow is eganged instead for better heading and position  hold.  */
+		calculate_yaw_offset(); 
+
 		mode_O();
 	}
    	//mode to takeoff
