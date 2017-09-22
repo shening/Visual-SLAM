@@ -3,23 +3,22 @@
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
-
+#ZR300 realsense fisheye
 # Camera Parameters. Adjust them!
 
 # Camera calibration parameters (OpenCV) 
-Camera.fx: 504.882251
-Camera.fy: 504.047986
-Camera.cx: 382.262184
-Camera.cy: 266.191813
+Camera.fx: 288.226676
+Camera.fy: 287.763644 
+Camera.cx: 317.156789
+Camera.cy: 238.774555
 
 # Camera distortion paremeters (OpenCV) --
-Camera.k1: -0.302089
-Camera.k2: 0.099491
-Camera.p1: 0.000504
-Camera.p2: -0.000647
-#Camera.k3: -0.0694145692
+Camera.k1: -0.222612
+Camera.k2:  0.034274
+Camera.p1: 0.000585
+Camera.p2: -0.001315
 
-Camera.width: 752
+Camera.width: 640
 Camera.height: 480
 
 # Camera frames per second 
@@ -48,14 +47,14 @@ ORBextractor.nFeatures: 2000
 ORBextractor.scaleFactor: 1.2
 
 # ORB Extractor: Number of levels in the scale pyramid	
-ORBextractor.nLevels: 8
+ORBextractor.nLevels: 12
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast			
-ORBextractor.iniThFAST: 16
-ORBextractor.minThFAST: 5
+ORBextractor.iniThFAST: 14
+ORBextractor.minThFAST: 4
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters

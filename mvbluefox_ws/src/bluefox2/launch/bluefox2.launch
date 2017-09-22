@@ -19,7 +19,7 @@
     <arg name="hdr" default="false"/>
     <arg name="wbp" default="-1"/>
     <arg name="expose_us" default="10000"/>
-    <arg name="gain_db" default="0.0"/>
+    <arg name="gain_db" default="10.0"/>
     <arg name="boost" default="false"/>
     <arg name="mm" default="0"/>
 
