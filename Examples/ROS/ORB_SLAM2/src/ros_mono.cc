@@ -139,7 +139,7 @@ void ImageGrabber::PublishPose(cv::Mat Tcw)
 		m.getRPY(current_roll, current_pitch, current_yaw);
 
 		//ROS_INFO("q1: %0.2f, q2: %0.2f, q3: %0.2f, q4: %0.2f, cy: %0.2f", q[0], q[1], q[2], q[3], current_yaw*180.0 / M_PI);
-		ROS_INFO("VisionYaw = %0.2f", current_yaw*180.0 / M_PI)
+		ROS_INFO("VisionYaw = %0.2f", current_yaw*180.0 / M_PI);
 		rotatedQ = tf::createQuaternionMsgFromRollPitchYaw(0, 0, -current_yaw+M_PI/2);		
 
        	prevTrackedTime = ros::Time::now();
@@ -214,7 +214,7 @@ void IMU_mag_AHRS(const sensor_msgs::Imu& IMU_MagMsg)
 	//ROS_INFO("Roll: %0.2f, Pitch: %0.2f, Yaw: %0.2f", current_roll_mag*180.0 / M_PI, current_pitch_mag*180.0 / M_PI, current_yaw_mag*180.0 / M_PI);
 	
 	ROS_INFO("Corrected yaw_mag = %0.2f", (current_yaw_mag + yaw_offset)*180.0 / M_PI);
-	current_yaw_mag = current_;yaw_mag + yaw_offset;
+	current_yaw_mag = current_yaw_mag + yaw_offset;
 
 	return;
 
