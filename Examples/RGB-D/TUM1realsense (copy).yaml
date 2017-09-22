@@ -3,20 +3,20 @@
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
-#ZR300 realsense fisheye
+
 # Camera Parameters. Adjust them!
 
 # Camera calibration parameters (OpenCV) 
-Camera.fx: 288.226676
-Camera.fy: 287.763644 
-Camera.cx: 317.156789
-Camera.cy: 238.774555
+Camera.fx: 629.302552
+Camera.fy: 635.529018 
+Camera.cx: 330.766408
+Camera.cy: 251.004731
 
 # Camera distortion paremeters (OpenCV) --
-Camera.k1: -0.222612
-Camera.k2:  0.034274
-Camera.p1: 0.000585
-Camera.p2: -0.001315
+Camera.k1: 0.128631
+Camera.k2: -0.604829
+Camera.p1: -0.000466
+Camera.p2: 0.000742
 
 Camera.width: 640
 Camera.height: 480
